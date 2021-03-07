@@ -6,30 +6,29 @@
             <title>wolfeton_dsm_50cm_hill_rend.tif</title>
 
             <!-- Leaflet -->
-            <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.css" />
-            <script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+            integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+            crossorigin=""/>
+            <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+            integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+            crossorigin=""></script>
 
-            <style>
-                body { margin:0; padding:0; }
-                body, table, tr, td, th, div, h1, h2, input { font-family: "Calibri", "Trebuchet MS", "Ubuntu", Serif; font-size: 11pt; }
-                #map { position:absolute; top:0; bottom:0; width:100%; } /* full size */
-                .ctl {
-                    padding: 2px 10px 2px 10px;
-                    background: white;
-                    background: rgba(255,255,255,0.9);
-                    box-shadow: 0 0 15px rgba(0,0,0,0.2);
-                    border-radius: 5px;
-                    text-align: right;
-                }
-                .title {
-                    font-size: 18pt;
-                    font-weight: bold;
-                }
-                .src {
-                    font-size: 10pt;
-                }
-
-            </style>
+        <style>
+		    html, body { 
+	    	    height: 100%; 
+	    	    padding: 0; 
+	    	    margin: 0
+	        }
+	        .leaflet-container {
+                background:#b3b3b3;
+            } 
+            #map { 
+			    position: absolute; 
+			    top:0; 
+			    bottom: 0;
+			    width: 100%
+			} /* full size */
+        </style>
 
         </head>
         <body>
@@ -38,20 +37,34 @@
 
         <script>
         /* **** Leaflet **** */
+        L.GridLayer.GridDebug = L.GridLayer.extend({
+				createTile: function (coords) {
+							const tile = document.createElement('div');
+							tile.style.outline = '1px solid green';
+							//tile.style.fontWeight = 'bold';
+							tile.style.fontSize = '10pt';
+							tile.innerHTML = [
+                            (coords.x/Math.pow(2,coords.z)*360-180).toFixed(6) + ' ' +
+                            (180/Math.PI*Math.atan(0.5*(Math.exp(Math.PI-2*Math.PI*coords.y/Math.pow(2,coords.z))-Math.exp(-(Math.PI-2*Math.PI*coords.y/Math.pow(2,coords.z)))))).toFixed(6),
+							coords.z + '/'+ coords.x + '/' + ((2 ** coords.z - coords.y)-1),
+							].join('<br /><br />');
+								return tile;
+				},
+		});
 
+		L.gridLayer.gridDebug = function (opts) {
+			return new L.GridLayer.GridDebug(opts);
+		};
+
+        var grid = L.gridLayer.gridDebug();
         // Base layers
         //  .. OpenStreetMap
         var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors', minZoom: 10, maxZoom: 20, maxNativeZoom: 18});
 
-        //  .. CartoDB Positron
-        var cartodb = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>', minZoom: 10, maxZoom: 18});
-
-        //  .. OSM Toner
-        var toner = L.tileLayer('http://{s}.tile.stamen.com/toner/{z}/{x}/{y}.png', {attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.', minZoom: 10, maxZoom: 18});
-
-        //  .. White background
-        var white = L.tileLayer("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAAA1BMVEX///+nxBvIAAAAH0lEQVQYGe3BAQ0AAADCIPunfg43YAAAAAAAAAAA5wIhAAAB9aK9BAAAAABJRU5ErkJggg==", {minZoom: 10, maxZoom: 18});
-
+        //  .. Grey background
+        // var grey = L.tileLayer("GreyTile.png");
+        var grey = L.tileLayer("");
+        
         // Overlay layers (TMS)
         var lyr = L.tileLayer('./{z}/{x}/{y}.png', {tms: true, opacity: 1.0, attribution: "", minZoom: 10, maxZoom: 20, maxNativeZoom: 18});
 
@@ -64,8 +77,14 @@
             layers: [osm]
         });
 
-        var basemaps = {"OpenStreetMap": osm, "CartoDB Positron": cartodb, "Stamen Toner": toner, "Without background": white}
-        var overlaymaps = {"Layer": lyr}
+        var basemaps = {
+			"OpenStreetMap": osm,
+			"Grey background": grey
+		}
+        var overlaymaps = {
+			"Surface 1m": lyr,
+			"Tile grid": grid
+		}
 
         // Title
         var title = L.control();
